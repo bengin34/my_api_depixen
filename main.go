@@ -30,7 +30,8 @@ func main() {
 	defer db.Close()
 
 	//create the table if it doesn't exist
-	_, err = db.Exec("CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, title TEXT, description TEXT, imageurl Text)")
+	_, err = db.Exec("CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, title TEXT, description TEXT, imageurl TEXT, createddate TIMESTAMP)")
+
 
 	if err != nil {
 		log.Fatal(err)
@@ -98,7 +99,10 @@ func createUser(db *sql.DB) http.HandlerFunc {
 		var u User
 		json.NewDecoder(r.Body).Decode(&u)
 
-		err := db.QueryRow("INSERT INTO users (title, description, imageurl) VALUES ($1, $2, $3) RETURNING id", u.Title, u.Description, u.ImageUrl).Scan(&u.ID)
+		u.CreatedDate = time.Now()
+
+		err := db.QueryRow("INSERT INTO users (title, description, imageurl, createddate) VALUES ($1, $2, $3, $4) RETURNING id", u.Title, u.Description, u.ImageUrl, u.CreatedDate).Scan(&u.ID)
+
 		if err != nil {
 			log.Fatal(err)
 		}
