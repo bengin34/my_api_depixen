@@ -13,12 +13,11 @@ import (
 )
 
 type User struct {
-	ID 	int	 `json:"id"`
-	Title string `json:"title"`
-	Description string `json: "description"`
-	ImageUrl string `json:"imageurl"`
-	CreatedDate time.Time   `json:"createddate"`
-	
+    ID          int       `json:"id"`
+    Title       string    `json:"title"`
+    Description string    `json:"description"`
+    ImageUrl    string    `json:"imageurl"`
+    CreatedDate time.Time `json:"createddate"`
 }
 
 func main() {
@@ -29,8 +28,14 @@ func main() {
 	}
 	defer db.Close()
 
-	//create the table if it doesn't exist
-	_, err = db.Exec("CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, title TEXT, description TEXT, imageurl TEXT, createddate TIMESTAMP)")
+
+	// create the table if it doesn't exist
+_, err = db.Exec("CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, title TEXT, description TEXT, imageurl TEXT)")
+
+if err != nil {
+    log.Fatal(err)
+}
+
 
 
 	if err != nil {
@@ -52,7 +57,7 @@ func main() {
 func jsonContentTypeMiddleware(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         w.Header().Set("Content-Type", "application/json")
-        w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3001")
+        w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
         w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
         w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
         if r.Method == "OPTIONS" {
@@ -99,9 +104,9 @@ func createUser(db *sql.DB) http.HandlerFunc {
 		var u User
 		json.NewDecoder(r.Body).Decode(&u)
 
-		u.CreatedDate = time.Now()
+		
 
-		err := db.QueryRow("INSERT INTO users (title, description, imageurl, createddate) VALUES ($1, $2, $3, $4) RETURNING id", u.Title, u.Description, u.ImageUrl, u.CreatedDate).Scan(&u.ID)
+		err := db.QueryRow("INSERT INTO users (title, description, imageurl) VALUES ($1, $2, $3) RETURNING id", u.Title, u.Description, u.ImageUrl).Scan(&u.ID)
 
 		if err != nil {
 			log.Fatal(err)
@@ -127,7 +132,6 @@ func deleteUser(db *sql.DB) http.HandlerFunc {
 		} else {
 			_, err := db.Exec("DELETE FROM users WHERE id = $1", id)
 			if err != nil {
-				//todo : fix error handling
 				w.WriteHeader(http.StatusNotFound)
 				return
 			}
